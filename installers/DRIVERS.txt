@@ -1,0 +1,36 @@
+============================================================
+  DRIVER DOWNLOAD GUIDE — read if any installers are missing
+============================================================
+
+ARDUINO IDE 2.x
+  File: arduino-ide-windows.exe
+  URL:  https://www.arduino.cc/en/software
+        (click "Windows Win 10 and newer, 64 bits")
+  Size: ~150 MB
+
+CH340 / CH341 USB DRIVER  ← most ESP32 boards use this chip
+  File: CH341SER.EXE
+  URL:  https://www.wch-ic.com/downloads/CH341SER_EXE.html
+        (click the Download button on that page — free, no account needed)
+  Size: ~300 KB
+  Install: just run CH341SER.EXE and click Install
+
+CP2102 USB DRIVER  ← some ESP32 boards use this chip instead
+  File: CP210x_Windows_Drivers.zip  (already included)
+  URL:  https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers
+  Size: ~7 MB
+  Install: unzip, run CP210xVCPInstaller_x64.exe
+
+HOW TO TELL WHICH CHIP YOUR BOARD HAS
+  Look at the small chip near the USB connector on the ESP32 board.
+  - "CH340" or "CH341" printed on it → use CH341SER.EXE
+  - "CP2102" or "CP2104" printed on it → use CP2102 driver
+  - If you can't read it, install BOTH — they don't conflict.
+
+ARDUINO-CLI (for ESP32 board package)
+  File: arduino-cli.exe  (already included)
+  Used by SETUP.ps1 to install the ESP32 board definitions.
+  Requires internet access during setup (~400 MB download).
+  Board URL: https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+
+============================================================

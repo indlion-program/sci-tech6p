@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Base64 Encoder/Decoder — Offline Tool</title>
+<style>
+  body { font-family: 'Courier New', monospace; background: #0d1710; color: #b8dfc8; padding: 30px; max-width: 720px; margin: 0 auto; }
+  h1 { color: #3dffa0; margin-bottom: 4px; }
+  .subtitle { color: #6aaa84; font-size: 13px; margin-bottom: 28px; }
+  label { display: block; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #6aaa84; margin: 18px 0 6px; }
+  textarea { width: 100%; height: 90px; background: #111e14; color: #3dffa0; border: 1px solid #1a2e20; padding: 12px; font-family: monospace; font-size: 14px; border-radius: 4px; box-sizing: border-box; resize: vertical; }
+  textarea:focus { outline: none; border-color: #3dffa0; }
+  .btn-row { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  button { background: #041a0e; color: #3dffa0; border: 1px solid #0e7a42; padding: 10px 20px; font-family: monospace; font-size: 13px; cursor: pointer; border-radius: 4px; transition: background .15s; }
+  button:hover { background: #07361d; }
+  button.danger { color: #ff7eb3; border-color: #8a2050; }
+  button.danger:hover { background: #200510; }
+  .example { background: #041a0e; border: 1px solid #07361d; border-radius: 6px; padding: 14px 18px; margin: 24px 0 0; font-size: 13px; line-height: 1.8; }
+  .example h3 { color: #3dffa0; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 10px; }
+  .ex-row { display: flex; gap: 12px; align-items: center; border-bottom: 1px solid #07361d; padding: 6px 0; }
+  .ex-row:last-child { border-bottom: none; }
+  .ex-plain { color: #60d4ff; min-width: 140px; }
+  .arrow { color: #304a38; }
+  .ex-enc { color: #ffd166; font-size: 12px; }
+  .note { color: #304a38; font-size: 12px; margin-top: 20px; line-height: 1.7; border-top: 1px solid #1a2e20; padding-top: 14px; }
+  .note strong { color: #6aaa84; }
+  #status { font-size: 12px; color: #6aaa84; margin-top: 6px; min-height: 18px; }
+</style>
+</head>
+<body>
+
+<h1>// Base64 Tool</h1>
+<p class="subtitle">Fully offline — works with no internet connection.</p>
+
+<label>Input</label>
+<textarea id="input" placeholder="Type your message here..."></textarea>
+
+<div class="btn-row">
+  <button onclick="doEncode()">▶ Encode → Base64</button>
+  <button onclick="doDecode()">◀ Decode ← Base64</button>
+  <button class="danger" onclick="doClear()">✕ Clear</button>
+</div>
+
+<label>Output</label>
+<textarea id="output" placeholder="Result appears here..." readonly></textarea>
+<div id="status"></div>
+
+<div class="example">
+  <h3>Quick Reference Examples</h3>
+  <div class="ex-row"><span class="ex-plain">hello</span><span class="arrow">→</span><span class="ex-enc">aGVsbG8=</span></div>
+  <div class="ex-row"><span class="ex-plain">Camp Cyber Academy</span><span class="arrow">→</span><span class="ex-enc">Q2FtcCBDeWJlciBBY2FkZW15</span></div>
+  <div class="ex-row"><span class="ex-plain">/secret</span><span class="arrow">→</span><span class="ex-enc">L3NlY3JldA==</span></div>
+  <div class="ex-row"><span class="ex-plain">/treasure</span><span class="arrow">→</span><span class="ex-enc">L3RyZWFzdXJl</span></div>
+  <div class="ex-row"><span class="ex-plain">/level2</span><span class="arrow">→</span><span class="ex-enc">L2xldmVsMg==</span></div>
+</div>
+
+<div class="note">
+  <strong>How Base64 works:</strong> Every 3 bytes of input → 4 Base64 characters.
+  Characters used: A–Z, a–z, 0–9, +, / (64 total). The <code>=</code> is padding.<br>
+  <br>
+  <strong>Important:</strong> Base64 is <em>encoding</em>, not encryption.
+  Anyone can decode it instantly — it just makes text safe to embed anywhere.
+  Real encryption (AES, RSA) requires a secret key to reverse.<br>
+  <br>
+  <strong>Tip for Day 4:</strong> To hide a URL path like <code>/secret</code> in your puzzle,
+  encode it here and paste the result into your HTML comment.
+</div>
+
+<script>
+function doEncode() {
+  var input = document.getElementById('input').value;
+  if (!input) { setStatus('Type something first!'); return; }
+  try {
+    var encoded = btoa(unescape(encodeURIComponent(input)));
+    document.getElementById('output').value = encoded;
+    setStatus('Encoded ' + input.length + ' chars → ' + encoded.length + ' Base64 chars');
+  } catch(e) {
+    document.getElementById('output').value = '';
+    setStatus('Error: ' + e.message);
+  }
+}
+
+function doDecode() {
+  var input = document.getElementById('input').value.trim();
+  if (!input) { setStatus('Paste Base64 text first!'); return; }
+  try {
+    var decoded = decodeURIComponent(escape(atob(input)));
+    document.getElementById('output').value = decoded;
+    setStatus('Decoded successfully.');
+  } catch(e) {
+    document.getElementById('output').value = '';
+    setStatus('Error: not valid Base64. Check for typos or extra spaces.');
+  }
+}
+
+function doClear() {
+  document.getElementById('input').value = '';
+  document.getElementById('output').value = '';
+  setStatus('');
+}
+
+function setStatus(msg) {
+  document.getElementById('status').textContent = msg;
+}
+
+// Allow Enter key to trigger encode in the input area
+document.getElementById('input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && e.ctrlKey) doEncode();
+});
+</script>
+</body>
+</html>
