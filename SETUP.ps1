@@ -18,6 +18,32 @@ function Write-OK($msg)   { Write-Host "    OK: $msg" -ForegroundColor Green }
 function Write-WARN($msg) { Write-Host "    !! $msg" -ForegroundColor Yellow }
 function Write-FAIL($msg) { Write-Host "    FAIL: $msg" -ForegroundColor Red }
 
+# Returns $true if a file exists AND is a real binary (not a Git LFS pointer stub)
+function Test-RealFile($path) {
+    if (-not (Test-Path $path)) { return $false }
+    $bytes = [System.IO.File]::ReadAllBytes($path)
+    if ($bytes.Length -lt 100) { return $false }   # LFS pointer is ~130 bytes of text
+    # LFS pointers start with "version https://git-lfs"
+    $header = [System.Text.Encoding]::ASCII.GetString($bytes[0..22])
+    if ($header -like "version https://git-lfs*") { return $false }
+    return $true
+}
+
+function Get-FileIfMissing($path, $url, $label) {
+    if (Test-RealFile $path) { return $true }
+    Write-WARN "$label not found or is a Git LFS stub. Downloading from official source..."
+    Write-WARN "URL: $url"
+    try {
+        $wc = New-Object System.Net.WebClient
+        $wc.DownloadFile($url, $path)
+        Write-OK "Downloaded $label."
+        return $true
+    } catch {
+        Write-FAIL "Download failed: $_"
+        return $false
+    }
+}
+
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Green
 Write-Host "  ESP32 CYBER ACADEMY - SETUP SCRIPT" -ForegroundColor Green
@@ -27,51 +53,79 @@ Write-Host "============================================" -ForegroundColor Green
 # -- Step 1: Install Arduino IDE ------------------------------
 Write-Step 1 "Installing Arduino IDE 2.x..."
 $arduinoExe = "$installersDir\arduino-ide-windows.exe"
-if (Test-Path $arduinoExe) {
-    Write-OK "Installer found. Running silent install (takes ~2 minutes)..."
-    Start-Process -FilePath $arduinoExe -ArgumentList "/S" -Wait
-    Write-OK "Arduino IDE installed."
+$arduinoUrl = "https://downloads.arduino.cc/arduino-ide/arduino-ide_2.3.6_Windows_64bit.exe"
+
+if (Get-FileIfMissing $arduinoExe $arduinoUrl "Arduino IDE installer") {
+    Write-OK "Running silent install (takes ~2 minutes)..."
+    $proc = Start-Process -FilePath $arduinoExe -ArgumentList "/S" -Wait -PassThru
+    if ($proc.ExitCode -eq 0) {
+        Write-OK "Arduino IDE installed."
+    } else {
+        Write-WARN "Installer exited with code $($proc.ExitCode). Arduino IDE may still have installed correctly."
+    }
 } else {
-    Write-WARN "arduino-ide-windows.exe not found in installers\ folder."
-    Write-WARN "Download from: https://www.arduino.cc/en/software"
-    Write-WARN "Install manually, then re-run this script."
+    Write-FAIL "Could not install Arduino IDE. Download manually from: https://www.arduino.cc/en/software"
 }
 
 # -- Step 2: Install CH340 USB driver -------------------------
 Write-Step 2 "Installing CH340 USB driver..."
 $ch340 = "$installersDir\CH341SER.EXE"
-if (Test-Path $ch340) {
-    Start-Process -FilePath $ch340 -ArgumentList "/S" -Wait
+$ch340Url = "https://www.wch-ic.com/downloads/file/65.html"
+
+if (Test-RealFile $ch340) {
+    $proc = Start-Process -FilePath $ch340 -ArgumentList "/S" -Wait -PassThru
     Write-OK "CH340 driver installed."
 } else {
-    Write-WARN "CH341SER.EXE not found in installers\ folder."
-    Write-WARN "Download from: https://www.wch-ic.com/downloads/CH341SER_EXE.html"
-    Write-WARN "Install manually."
+    Write-WARN "CH341SER.EXE not found. Download and install manually:"
+    Write-WARN "  https://www.wch-ic.com/downloads/CH341SER_EXE.html"
 }
 
 # -- Step 3: Install CP2102 USB driver ------------------------
 Write-Step 3 "Installing CP2102 USB driver..."
 $cp2102zip = "$installersDir\CP210x_Windows_Drivers.zip"
 $cp2102dir = "$installersDir\cp2102-temp"
-if (Test-Path $cp2102zip) {
+$cp2102Url = "https://www.silabs.com/documents/public/software/CP210x_Windows_Drivers.zip"
+
+if (Get-FileIfMissing $cp2102zip $cp2102Url "CP2102 driver ZIP") {
     Write-OK "Extracting CP2102 drivers..."
-    Expand-Archive -Path $cp2102zip -DestinationPath $cp2102dir -Force
-    $cp2102Installer = Get-ChildItem "$cp2102dir" -Filter "CP210xVCPInstaller_x64.exe" -Recurse | Select-Object -First 1
-    if ($cp2102Installer) {
-        Start-Process -FilePath $cp2102Installer.FullName -ArgumentList "/S" -Wait
-        Write-OK "CP2102 driver installed."
-    } else {
-        Write-WARN "Could not find CP210xVCPInstaller_x64.exe inside the zip."
+    try {
+        Expand-Archive -Path $cp2102zip -DestinationPath $cp2102dir -Force
+        $cp2102Installer = Get-ChildItem "$cp2102dir" -Filter "CP210xVCPInstaller_x64.exe" -Recurse | Select-Object -First 1
+        if ($cp2102Installer) {
+            Start-Process -FilePath $cp2102Installer.FullName -ArgumentList "/S" -Wait
+            Write-OK "CP2102 driver installed."
+        } else {
+            Write-WARN "Could not find CP210xVCPInstaller_x64.exe inside the zip."
+        }
+    } catch {
+        Write-FAIL "Failed to extract ZIP: $_"
     }
 } else {
-    Write-WARN "CP210x_Windows_Drivers.zip not found in installers\ folder."
-    Write-WARN "Download from: https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers"
+    Write-FAIL "Could not install CP2102 driver. Download manually from: https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers"
 }
 
 # -- Step 4: Install ESP32 board package via arduino-cli ------
 Write-Step 4 "Installing ESP32 board package for Arduino..."
 $cli = "$installersDir\arduino-cli.exe"
-if (Test-Path $cli) {
+$cliUrl = "https://downloads.arduino.cc/arduino-cli/arduino-cli_latest_Windows_64bit.zip"
+$cliZip = "$installersDir\arduino-cli.zip"
+
+if (-not (Test-RealFile $cli)) {
+    Write-WARN "arduino-cli.exe not found or is a Git LFS stub. Downloading..."
+    if (Get-FileIfMissing $cliZip $cliUrl "arduino-cli ZIP") {
+        $cliTemp = "$installersDir\cli-temp"
+        Expand-Archive -Path $cliZip -DestinationPath $cliTemp -Force
+        $cliExtracted = Get-ChildItem $cliTemp -Filter "arduino-cli.exe" -Recurse | Select-Object -First 1
+        if ($cliExtracted) {
+            Copy-Item $cliExtracted.FullName $cli -Force
+            Write-OK "arduino-cli ready."
+        } else {
+            Write-FAIL "Could not find arduino-cli.exe in downloaded ZIP."
+        }
+    }
+}
+
+if (Test-RealFile $cli) {
     Write-OK "arduino-cli found. Configuring ESP32 boards (needs internet, ~5-10 min)..."
     & $cli config init --overwrite 2>&1 | Out-Null
     & $cli config add board_manager.additional_urls "https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json" 2>&1 | Out-Null
@@ -79,10 +133,13 @@ if (Test-Path $cli) {
     & $cli core update-index 2>&1 | Out-Null
     Write-OK "Installing esp32 core (downloading ~400MB - please wait)..."
     & $cli core install esp32:esp32 2>&1
-    Write-OK "ESP32 board package installed!"
+    if ($LASTEXITCODE -eq 0) {
+        Write-OK "ESP32 board package installed!"
+    } else {
+        Write-WARN "esp32 core install may have had issues (exit code $LASTEXITCODE). Check output above."
+    }
 } else {
-    Write-WARN "arduino-cli.exe not found in installers\ folder."
-    Write-WARN "Manually add board URL in Arduino IDE:"
+    Write-FAIL "arduino-cli not available. Add ESP32 boards manually in Arduino IDE:"
     Write-WARN "  File > Preferences > Additional Boards Manager URLs:"
     Write-WARN "  https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json"
     Write-WARN "Then: Tools > Board > Boards Manager > search 'esp32' > Install by Espressif Systems"
