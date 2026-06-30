@@ -1,34 +1,41 @@
 // ============================================================
-// DAY 1 — EXPLORER TEMPLATE  ★ Ages 10-12
+// DAY 1 — EXPLORER  * Ages 10-12
 // "The Invisible Network"
-// Fill in every blank marked with  ______
+//
+// 1. Put your name in the ssid below.
+// 2. Type your own message in the PAGE below.
+// 3. Upload, connect to your Wi-Fi, and visit 192.168.4.1
 // ============================================================
 #include <WiFi.h>
 #include <WebServer.h>
 
-// STEP 1: Change "YourName_Network" to include YOUR first name
-//         so it shows up as YOUR Wi-Fi in the list!
-const char* ssid     = "______";      // example: "Sarah_Network"
-const char* password = "letmein123";  // everyone uses the same password
+const char* ssid     = "______";       // <-- your name, e.g. "Sarah_Network"
+const char* password = "letmein123";   // everyone uses this password
 
 WebServer server(80);
 
-// This function runs every time someone visits your web page
+// This is your web page.
+// Everything between  R"PAGE(  and  )PAGE"  is plain HTML.
+// You can paste HTML straight from W3Schools here - no quotes to fix!
+const char PAGE[] = R"PAGE(
+
+<h1>______</h1>
+<p>______</p>
+
+)PAGE";
+
 void handleRoot() {
-  // STEP 2: Replace the message inside the quotes.
-  //         Be creative! It will show on the page.
-  server.send(200, "text/html", "<h1>______</h1><p>______</p>");
+  server.send(200, "text/html", PAGE);   // send your page to anyone who visits
 }
 
 void setup() {
   Serial.begin(115200);
-  WiFi.softAP(ssid, password);          // start your Wi-Fi network
-  Serial.println(WiFi.softAPIP());       // prints 192.168.4.1
-  server.on("/", handleRoot);            // connect the "/" page to your function
-  server.begin();                        // start the server!
+  WiFi.softAP(ssid, password);           // start your Wi-Fi network
+  Serial.println(WiFi.softAPIP());        // prints 192.168.4.1
+  server.on("/", handleRoot);
+  server.begin();
 }
 
-// This runs over and over to keep the server alive
 void loop() {
   server.handleClient();
 }

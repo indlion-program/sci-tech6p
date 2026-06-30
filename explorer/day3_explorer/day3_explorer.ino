@@ -1,11 +1,13 @@
 // ============================================================
-// DAY 3 — EXPLORER TEMPLATE  ★ Ages 10-12
+// DAY 3 — EXPLORER  * Ages 10-12
 // "Peeking Behind the Curtain"
-// Your flag must be INVISIBLE on the page but VISIBLE in source!
 //
-// Flag format:  WORD-WORD-NUMBER
-// Example:      BLUE-ROCKET-42
-// Make it your own!
+// Hide a secret flag: INVISIBLE on the page, but it shows up
+// when someone clicks "View Page Source".
+//
+// 1. Put your flag in the hidden comment below (WORD-WORD-NUMBER).
+// 2. Write an innocent-looking message for the rest of the page.
+// 3. Upload, visit 192.168.4.1, then try "View Page Source".
 // ============================================================
 #include <WiFi.h>
 #include <WebServer.h>
@@ -15,18 +17,19 @@ const char* password = "letmein123";
 
 WebServer server(80);
 
+// Everything between  R"PAGE(  and  )PAGE"  is plain HTML.
+// The <!-- ... --> line is a hidden comment - invisible on screen!
+const char PAGE[] = R"PAGE(
+
+<!-- FLAG: YOUR-FLAG-HERE -->
+
+<h1>______</h1>
+<p>______</p>
+
+)PAGE";
+
 void handleRoot() {
-  String html = "<!DOCTYPE html><html><body style='font-family:sans-serif;padding:30px'>";
-
-  // STEP: Replace YOUR-FLAG-HERE with your flag (WORD-WORD-NUMBER)
-  //       This line is a hidden comment — invisible on screen!
-  html += "<!-- FLAG: YOUR-FLAG-HERE -->";
-
-  // STEP: Change the message on the page to something innocent-looking
-  html += "<h1>______</h1>";
-  html += "<p>______</p>";
-  html += "</body></html>";
-  server.send(200, "text/html", html);
+  server.send(200, "text/html", PAGE);
 }
 
 void setup() {

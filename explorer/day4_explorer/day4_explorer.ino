@@ -1,18 +1,14 @@
 // ============================================================
-// DAY 4 — EXPLORER TEMPLATE  ★ Ages 10-12
-// "The Ultimate Cyber Escape Room"
+// DAY 4 — EXPLORER  * Ages 10-12
+// "The Cyber Escape Room"
 //
-// Build a 2-layer puzzle:
-//   LAYER 1 — Main page: a visible clue or riddle
-//   LAYER 2 — Hidden comment: Base64-encoded path to the win page
-//   LAYER 3 — /secret page: "YOU WIN!" message
+// Build a 2-page puzzle:
+//   PAGE 1  (/)        a clue + a hidden Base64 path to the secret page
+//   PAGE 2  (/secret)  the "YOU WIN!" page
 //
-// How to create your hidden clue:
-//   1. Decide on your secret URL — example: /treasure
-//   2. Open tools/base64_encoder.html
-//   3. Type  /treasure  and click Encode
-//   4. Paste the result into the hidden comment below
-//   5. Register your secret URL in setup() too!
+// 1. Pick a secret path, e.g. /treasure
+// 2. Encode it in tools/base64_encoder.html, paste it in the hidden comment.
+// 3. If you change /secret below, change it in setup() too.
 // ============================================================
 #include <WiFi.h>
 #include <WebServer.h>
@@ -22,28 +18,33 @@ const char* password = "letmein123";
 
 WebServer server(80);
 
-// LAYER 1 — The main puzzle page
+// Everything between  R"PAGE(  and  )PAGE"  is plain HTML.
+
+// PAGE 1 - the clue page (the hidden Base64 path lives in the comment)
+const char MAIN_PAGE[] = R"PAGE(
+
+<!-- CLUE: ______ -->
+
+<h1>______</h1>
+<p>______</p>
+
+)PAGE";
+
+// PAGE 2 - the win page
+const char WIN_PAGE[] = R"PAGE(
+
+<h1 style="font-size:3em">YOU WIN!</h1>
+<p>You cracked the puzzle!</p>
+<p>Show this to a staff member!</p>
+
+)PAGE";
+
 void handleRoot() {
-  String html = "<!DOCTYPE html><html><body style='font-family:sans-serif;padding:30px'>";
-
-  // STEP: Paste your Base64-encoded secret path here
-  html += "<!-- CLUE: ______ -->";
-
-  // STEP: Write a mysterious clue or riddle here
-  html += "<h1>______</h1>";
-  html += "<p>______</p>";
-  html += "</body></html>";
-  server.send(200, "text/html", html);
+  server.send(200, "text/html", MAIN_PAGE);
 }
 
-// LAYER 3 — The win page (change /secret to match your secret URL)
 void handleSecret() {
-  String html = "<!DOCTYPE html><html><body style='font-family:sans-serif;padding:30px;text-align:center'>";
-  html += "<h1 style='font-size:3em'>YOU WIN!</h1>";
-  html += "<p>You cracked ______'s puzzle!</p>";    // put your name here
-  html += "<p>Show this to a staff member!</p>";
-  html += "</body></html>";
-  server.send(200, "text/html", html);
+  server.send(200, "text/html", WIN_PAGE);
 }
 
 void setup() {
@@ -51,7 +52,7 @@ void setup() {
   WiFi.softAP(ssid, password);
   Serial.println(WiFi.softAPIP());
   server.on("/", handleRoot);
-  server.on("/secret", handleSecret);   // STEP: change /secret to match your URL
+  server.on("/secret", handleSecret);   // change /secret if you used a different path
   server.begin();
 }
 
