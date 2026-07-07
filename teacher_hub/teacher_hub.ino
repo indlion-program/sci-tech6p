@@ -59,6 +59,9 @@ const char DASHBOARD[] = R"DASH(
   <style>
     :root{ --bg:#0a0f0c; --green:#3dffa0; --blue:#60d4ff; --red:#ff5b6e; --amber:#ffd166; }
     *{ box-sizing:border-box; }
+    /* the id rules below set display:flex/grid, which would beat the browser's
+       [hidden] rule — force hidden to win so START can hide the splash */
+    [hidden]{ display:none !important; }
     html,body{ margin:0; height:100%; background:var(--bg); color:var(--green);
                font-family:'Courier New',monospace; overflow:hidden; }
     #splash{ position:fixed; inset:0; background:var(--bg); z-index:40;
