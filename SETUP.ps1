@@ -146,11 +146,12 @@ if (Test-RealFile $cli) {
 }
 
 # -- Step 5: Copy code to Desktop for easy access -------------
-Write-Step 5 "Copying code folder to Desktop..."
+Write-Step 5 "Copying code to Desktop..."
 $desktop = [Environment]::GetFolderPath("Desktop")
-Copy-Item -Path "$PSScriptRoot\code" -Destination "$desktop\ESP32_Code" -Recurse -Force
-Copy-Item -Path "$PSScriptRoot\explorer" -Destination "$desktop\ESP32_Code\explorer" -Recurse -Force
-Copy-Item -Path "$PSScriptRoot\expert" -Destination "$desktop\ESP32_Code\expert" -Recurse -Force
+$dest = "$desktop\ESP32_Code"
+New-Item -ItemType Directory -Force -Path $dest | Out-Null
+Copy-Item -Path "$PSScriptRoot\student_board" -Destination "$dest\student_board" -Recurse -Force
+Copy-Item -Path "$PSScriptRoot\teacher_hub"   -Destination "$dest\teacher_hub" -Recurse -Force
 Copy-Item -Path "$PSScriptRoot\tools" -Destination "$desktop\ESP32_Tools" -Recurse -Force
 Write-OK "Code is on the Desktop in ESP32_Code\ and ESP32_Tools\"
 
@@ -165,7 +166,7 @@ Write-Host "  1. Open Arduino IDE" -ForegroundColor White
 Write-Host "  2. Plug in an ESP32 board via USB" -ForegroundColor White
 Write-Host "  3. Tools > Board > ESP32 Arduino > ESP32 Dev Module" -ForegroundColor White
 Write-Host "  4. Tools > Port > select the COM port that appears" -ForegroundColor White
-Write-Host "  5. Open Desktop\ESP32_Code\day1_hello_world\day1_hello_world.ino" -ForegroundColor White
+Write-Host "  5. Open Desktop\ESP32_Code\student_board\student_board.ino" -ForegroundColor White
 Write-Host "  6. Click Upload (arrow button). If it works, you're ready!" -ForegroundColor White
 Write-Host ""
 Write-Host "If no COM port appears after plugging in the ESP32:" -ForegroundColor Yellow
