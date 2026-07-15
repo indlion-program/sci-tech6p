@@ -44,6 +44,7 @@ tools/base64_encoder.html         Offline base64 encode/decode helper.
 installers/                       Arduino IDE, USB drivers, arduino-cli (Windows).
 SETUP.bat / SETUP.ps1             One-click Windows setup for a camper laptop.
 README.txt                        Short camper-facing setup guide.
+pentest/esp32_ble_just_works/     BLE "Just Works" pairing tester (lab use, see its README).
 ```
 
 ## Hardware
